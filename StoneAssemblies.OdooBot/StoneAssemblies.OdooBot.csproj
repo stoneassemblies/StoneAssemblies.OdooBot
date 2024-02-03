@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>dotnet-StoneAssemblies.OdooBot-086e14bd-61b7-41c4-b086-a83f8ce60e31</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AngleSharp" Version="1.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="PortaCapena.OdooJsonRpcClient" Version="1.0.20" />
+		<PackageReference Include="QuestPDF" Version="2023.12.4" />
+	</ItemGroup>
+</Project>
