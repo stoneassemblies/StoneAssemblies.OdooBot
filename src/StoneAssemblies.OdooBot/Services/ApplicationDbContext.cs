@@ -14,7 +14,13 @@ public class ApplicationDbContext(ILogger<ApplicationDbContext> logger) : DbCont
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
-        options.UseSqlite($"Data Source={Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "odoo-local-cache.db")}");
+        var dataDirectoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
+        if (!Directory.Exists(dataDirectoryPath))
+        {
+            Directory.CreateDirectory(dataDirectoryPath);
+        }
+
+        options.UseSqlite($"Data Source={Path.Combine(dataDirectoryPath, "odoo-local-cache.db")}");
     }
 
     /// <inheritdoc />
