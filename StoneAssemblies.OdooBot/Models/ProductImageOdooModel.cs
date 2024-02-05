@@ -3,7 +3,7 @@ using PortaCapena.OdooJsonRpcClient.Attributes;
 using PortaCapena.OdooJsonRpcClient.Converters;
 using PortaCapena.OdooJsonRpcClient.Models;
 
-namespace StoneAssemblies.OdooBot.Tests;
+namespace StoneAssemblies.OdooBot.Models;
 
 [OdooTableName("product.image")]
 [JsonConverter(typeof(OdooModelConverter))]
