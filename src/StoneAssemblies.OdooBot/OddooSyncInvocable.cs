@@ -8,10 +8,10 @@ using StoneAssemblies.OdooBot.Services;
 using StoneAssemblies.OdooBot.Tests;
 using System.Reflection;
 using MethodTimer;
-using PortaCapena.OdooJsonRpcClient.Extensions;
 using StoneAssemblies.OdooBot;
 using StoneAssemblies.OdooBot.Models;
-using static OddooSyncInvocable;
+using QuestPDF.Infrastructure;
+using Image = StoneAssemblies.OdooBot.Entities.Image;
 
 public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProvider provider,
         IOdooRepository<ProductCategoryOdooModel> productCategoryRepository,
@@ -56,68 +56,77 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         var categories = await categoryRepository.All().ToListAsync();
         foreach (var category in categories)
         {
-            logger.LogInformation("Synchronizing existing products for category '{Category}'...", category.Name);
+            logger.LogInformation("Synchronizing existing products of category '{Category}'...", category.Name);
 
-            var productIds = await productRepository
+            var externalIds = await productRepository
                 .Find(product => product.CategoryId == category.Id)
                 .Select(product => product.ExternalId)
                 .ToArrayAsync();
 
-            var query = productTemplateRepository.Query().ByIds(productIds).Select(model => new
-            {
-                model.Id,
-                model.DescriptionSale,
-                model.Image128,
-                model.Image256,
-                model.Image512,
-                model.Image1024,
-                model.Image1920,
-                model.ProductTemplateImageIds,
-            });
-
             int count = 0;
-            await foreach (var productTemplateOdooModel in query.GetAsync())
+            foreach (var externalId in externalIds)
             {
-                logger.LogInformation("Updating product '{OdooProductId}' - '{CategoryName}'", productTemplateOdooModel.Id, category.Name);
+                logger.LogInformation("Updating product '{ExternalId}' from Category '{CategoryName}'", externalId, category.Name);
 
                 var transaction = unitOfWork.BeginTransaction();
 
                 try
                 {
-                    await UpdateProductAsync(productTemplateOdooModel);
-                    await UpdateFeatureImagesAsync(productTemplateOdooModel);
-                    await DeleteUnusedImagesAsync(productTemplateOdooModel);
-                    await UpdateImagesAsync(productTemplateOdooModel);
-
+                    await UpdateProductAsync(externalId);
+                    await UpdateFeatureImagesAsync(externalId);
+                    await DeleteUnusedImagesAsync(externalId);
+                    await UpdateImagesAsync(externalId);
                     await transaction.CommitAsync();
 
-                    logger.LogInformation("Updated product '{OdooProductId}' - '{CategoryName}'", productTemplateOdooModel.Id, category.Name);
+                    logger.LogInformation("Updated product '{ExternalId}' from category '{CategoryName}'", externalId, category.Name);
+
                     count++;
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
 
-                    logger.LogError(ex, "Error occurred updating product '{OdooProductId}' - '{CategoryName}'", productTemplateOdooModel.Id, category.Name);
+                    logger.LogError(ex, "Error occurred updating product '{ExternalId}' - '{CategoryName}'", externalId, category.Name);
                 }
             }
 
-            logger.LogInformation("Synchronized '{ProductCount}' products for category '{Category}'...", count, category.Name);
+            logger.LogInformation("Synchronized '{ProductCount}' products of category '{Category}'", count, category.Name);
         }
 
-        logger.LogInformation("Synchronized existing products...");
+        logger.LogInformation("Synchronized existing products");
     }
 
     [Time]
-    private async Task UpdateProductAsync(ProductTemplateOdooModel productTemplateOdooModel)
+    private async Task UpdateProductAsync(long externalId)
     {
+        logger.LogInformation("Updating product '{ExternalId}' ", externalId);
+
         var changeDetected = false;
 
         var productRepository = unitOfWork.GetRepository<Product>();
         var product = await productRepository
-            .SingleAsync(product => product.ExternalId == productTemplateOdooModel.Id);
+            .SingleOrDefaultAsync(product => product.ExternalId == externalId);
 
-        logger.LogInformation("Detecting changes in product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+        if (product is null)
+        {
+            logger.LogInformation("Update product skipped. Product '{ExternalId}' not found", externalId);
+            return;
+        }
+
+        var queryResult = await productTemplateRepository.Query().ById(externalId).Select(model => new
+        {
+            model.Id,
+            model.DescriptionSale,
+        }).FirstOrDefaultAsync();
+
+        var productTemplateOdooModel = queryResult.Value;
+        if (productTemplateOdooModel is null)
+        {
+            logger.LogInformation("Unable to retrieve information of product '{ExternalId}'.", externalId);
+            return;
+        }
+
+        logger.LogInformation("Detecting changes in product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
 
         var nameTranslationResult = await irTranslationRepository
             .Query()
@@ -131,7 +140,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         if (nameTranslationResult?.Value?.Value is not null)
         {
             changeDetected = true;
-            logger.LogInformation("Detected change in name of product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+            logger.LogInformation("Detected change in name of product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
             product.Name = nameTranslationResult.Value.Value.Trim();
         }
 
@@ -147,30 +156,51 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         if (nameTranslationResult?.Value?.Value is not null)
         {
             changeDetected = true;
-            logger.LogInformation("Detected change in description of product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+            logger.LogInformation("Detected change in description of product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
             product.Description = (descriptionTranslationResult?.Value?.Value ??
                                    productTemplateOdooModel.DescriptionSale).Trim();
         }
 
         if (changeDetected)
         {
-            logger.LogInformation("Updating existing product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+            logger.LogInformation("Updating existing product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
 
             productRepository.Update(product);
             await productRepository.SaveChangesAsync();
 
-            logger.LogInformation("Updated existing product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+            logger.LogInformation("Updated existing product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
         }
     }
 
     [Time]
-    private async Task DeleteUnusedImagesAsync(ProductTemplateOdooModel productTemplateOdooModel)
+    private async Task DeleteUnusedImagesAsync(long externalId)
     {
+        logger.LogInformation("Deleting unused images of product '{ExternalId}'", externalId);
+
         var productRepository = unitOfWork.GetRepository<Product>();
         var product = await productRepository
-            .SingleAsync(product => product.ExternalId == productTemplateOdooModel.Id);
+            .SingleOrDefaultAsync(product => product.ExternalId == externalId);
 
-        logger.LogInformation("Deleting unused images of product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+        if (product is null)
+        {
+            logger.LogInformation("Deleted unused images of product skipped. Product '{ExternalId}' not found", externalId);
+            return;
+        }
+
+        var queryResult = await productTemplateRepository.Query().ById(externalId).Select(model => new
+        {
+            model.Id,
+            model.ProductTemplateImageIds,
+        }).FirstOrDefaultAsync();
+
+        var productTemplateOdooModel = queryResult.Value;
+        if (productTemplateOdooModel is null)
+        {
+            logger.LogInformation("Unable to retrieve images of product '{ExternalId}'.", externalId);
+            return;
+        }
+
+        logger.LogInformation("Deleting unused images of product '{ExternalId}' - '{ProductName}'", externalId, product.Name);
 
         var productTemplateImageIds = productTemplateOdooModel.ProductTemplateImageIds;
 
@@ -181,20 +211,45 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
         await imageRepository.SaveChangesAsync();
 
-        logger.LogInformation("Deleted unused images of product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+        logger.LogInformation("Deleted unused images of product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
     }
 
     [Time]
-    private async Task UpdateFeatureImagesAsync(ProductTemplateOdooModel productTemplateOdooModel)
+    private async Task UpdateFeatureImagesAsync(long externalId)
     {
+        logger.LogInformation("Updating feature images of product '{ExternalId}'", externalId);
+
         var productRepository = unitOfWork.GetRepository<Product>();
         var product = await productRepository
-            .SingleAsync(product => product.ExternalId == productTemplateOdooModel.Id);
+            .SingleOrDefaultAsync(product => product.ExternalId == externalId);
+
+        if (product is null)
+        {
+            logger.LogInformation("Update feature images of product '{ExternalId}'.", externalId);
+            return;
+        }
+
+        var queryResult = await productTemplateRepository.Query().ById(externalId).Select(model => new
+        {
+            model.Id,
+            model.Image128,
+            model.Image256,
+            model.Image512,
+            model.Image1024,
+            model.Image1920,
+        }).FirstOrDefaultAsync();
+
+        var productTemplateOdooModel = queryResult.Value;
+        if (productTemplateOdooModel is null)
+        {
+            logger.LogInformation("Unable to retrieve feature images of product skipped. Product '{ExternalId}' not found.", externalId);
+            return;
+        }
 
         var imageRepository = unitOfWork.GetRepository<Image>();
-
-        logger.LogInformation("Detecting changes in feature images for product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
-        foreach (var imageSize in Enum.GetValues<ImageSize>())
+        logger.LogInformation("Detecting changes in feature images for product '{ExternalId}' - '{ProductName}'", externalId, product.Name);
+        var count = 0;
+        foreach (var imageSize in Enum.GetValues<StoneAssemblies.OdooBot.Entities.ImageSize>())
         {
             var changeDetected = false;
             var encodeContent = typeof(ProductTemplateOdooModel).GetProperty(
@@ -213,7 +268,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     if (featuredImage is null)
                     {
                         logger.LogInformation(
-                            "Adding new feature image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                            "Adding new feature image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, externalId, product.Name);
 
                         featuredImage = new Image
                         {
@@ -228,8 +283,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     }
                     else if (!content.SequenceEqual(featuredImage.Content))
                     {
-                        logger.LogInformation(
-                            "Detected change in feature image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                        logger.LogInformation("Detected change in feature image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, externalId, product.Name);
 
                         featuredImage.Content = content;
                         imageRepository.Update(featuredImage);
@@ -238,33 +292,51 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
                     if (changeDetected)
                     {
+                        count++;
+
                         await imageRepository.SaveChangesAsync();
 
-                        logger.LogInformation("Updated feature image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                        logger.LogInformation("Updated feature image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, externalId, product.Name);
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.LogWarning(ex,
-                        "Error adding featured image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                        "Error adding featured image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, externalId, product.Name);
                 }
             }
         }
-    }
 
-    public class ImageWithoutContent
-    {
-        public long ExternalId { get; set; }
-        public DateTime? LastUpdate { get; set; }
-        public Guid Id { get; set; }
+        logger.LogInformation("Added or updated '{ImagesCount}' featured images to product '{ExternalId}' - '{ProductName}'", count, externalId, product.Name);
     }
 
     [Time]
-    private async Task UpdateImagesAsync(ProductTemplateOdooModel productTemplateOdooModel)
+    private async Task UpdateImagesAsync(long externalId)
     {
+        logger.LogInformation("Updating images of product '{ExternalId}'", externalId);
+
         var productRepository = unitOfWork.GetRepository<Product>();
         var product = await productRepository
-            .SingleAsync(product => product.ExternalId == productTemplateOdooModel.Id);
+            .SingleOrDefaultAsync(product => product.ExternalId == externalId);
+
+        if (product is null)
+        {
+            logger.LogInformation("Update images of product skipped. Product '{ExternalId}' not found.", externalId);
+            return;
+        }
+
+        var queryResult = await productTemplateRepository.Query().ById(externalId).Select(model => new
+        {
+            model.Id,
+            model.ProductTemplateImageIds,
+        }).FirstOrDefaultAsync();
+
+        var productTemplateOdooModel = queryResult?.Value;
+        if (productTemplateOdooModel is null)
+        {
+            logger.LogInformation("Unable to retrieve images of product '{ExternalId}'.", externalId);
+            return;
+        }
 
         var productTemplateImageIds = productTemplateOdooModel.ProductTemplateImageIds;
 
@@ -274,7 +346,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             .FindAsync(SpecificationBuilder.Build<Image>(images =>
                 images.Where(image => image.ProductId == product.Id && image.ExternalId != null)))).ToList();
 
-        logger.LogInformation("Detecting changes in images for '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+        logger.LogInformation("Detecting changes in images for '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
 
         var cache = new Dictionary<long, ProductImageOdooModel>();
 
@@ -309,9 +381,9 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
             if (productImageOdooModel is not null && productImageOdooModel.WriteDate > image.LastUpdate)
             {
-                logger.LogInformation("Detected change in images of product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+                logger.LogInformation("Detected change in images of product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
 
-                foreach (var imageSize in Enum.GetValues<ImageSize>())
+                foreach (var imageSize in Enum.GetValues<StoneAssemblies.OdooBot.Entities.ImageSize>())
                 {
                     var encodeContent = typeof(ProductImageOdooModel).GetProperty(
                             string.Format(ImagePropertyFormat, Convert.ToInt32(imageSize)),
@@ -334,12 +406,12 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                             await imageRepository.SaveChangesAsync();
 
                             logger.LogInformation(
-                                "Updated image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                                "Updated image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
                         }
                         catch (Exception ex)
                         {
                             logger.LogWarning(ex,
-                                "Error updating image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                                "Error updating image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
                         }
                     }
                 }
@@ -357,9 +429,10 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             var imageQuery = productImageRepository.Query()
                 .Where(model => model.Id, OdooOperator.In, productIds);
 
+            var count = 0;
             await foreach (var productImageOdooModel in imageQuery.GetAsync())
             {
-                foreach (var imageSize in Enum.GetValues<ImageSize>())
+                foreach (var imageSize in Enum.GetValues<StoneAssemblies.OdooBot.Entities.ImageSize>())
                 {
                     var encodeContent = typeof(ProductImageOdooModel).GetProperty(
                             string.Format(ImagePropertyFormat, Convert.ToInt32(imageSize)),
@@ -373,7 +446,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                             var content = Convert.FromBase64String(encodeContent);
 
                             logger.LogInformation(
-                                "Adding new image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                                "Adding new image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
 
                             var image = new Image
                             {
@@ -388,17 +461,21 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                             imageRepository.Add(image);
                             await imageRepository.SaveChangesAsync();
 
+                            count++;
+
                             logger.LogInformation(
-                                "Added new image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                                "Added new image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
                         }
                         catch (Exception ex)
                         {
                             logger.LogWarning(ex,
-                                "Error adding image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                                "Error adding image of size '{ImageSize}' to product '{ExternalId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
                         }
                     }
                 }
             }
+
+            logger.LogInformation("Added new '{ImagesCount}' images to product '{ExternalId}' - '{ProductName}'", count, productTemplateOdooModel.Id, product.Name);
         }
     }
 
