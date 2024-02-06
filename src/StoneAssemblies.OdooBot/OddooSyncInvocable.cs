@@ -56,7 +56,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         var categories = await categoryRepository.All().ToListAsync();
         foreach (var category in categories)
         {
-            logger.LogInformation("Synchronizing existing products of category '{Category}'...", category.Name);
+            logger.LogInformation("Synchronizing existing products of category '{CategoryName}'...", category.Name);
 
             var externalIds = await productRepository
                 .Find(product => product.CategoryId == category.Id)
@@ -66,7 +66,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             int count = 0;
             foreach (var externalId in externalIds)
             {
-                logger.LogInformation("Updating product '{ExternalId}' from Category '{CategoryName}'", externalId, category.Name);
+                logger.LogInformation("Updating product '{ExternalId}' of category '{CategoryName}'", externalId, category.Name);
 
                 var transaction = unitOfWork.BeginTransaction();
 
@@ -78,7 +78,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     await UpdateImagesAsync(externalId);
                     await transaction.CommitAsync();
 
-                    logger.LogInformation("Updated product '{ExternalId}' from category '{CategoryName}'", externalId, category.Name);
+                    logger.LogInformation("Updated product '{ExternalId}' of category '{CategoryName}'", externalId, category.Name);
 
                     count++;
                 }
@@ -90,7 +90,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                 }
             }
 
-            logger.LogInformation("Synchronized '{ProductCount}' products of category '{Category}'", count, category.Name);
+            logger.LogInformation("Synchronized '{ProductCount}' products of category '{CategoryName}'", count, category.Name);
         }
 
         logger.LogInformation("Synchronized existing products");
@@ -119,7 +119,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             model.DescriptionSale,
         }).FirstOrDefaultAsync();
 
-        var productTemplateOdooModel = queryResult.Value;
+        var productTemplateOdooModel = queryResult?.Value;
         if (productTemplateOdooModel is null)
         {
             logger.LogInformation("Unable to retrieve information of product '{ExternalId}'.", externalId);
@@ -247,7 +247,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         }
 
         var imageRepository = unitOfWork.GetRepository<Image>();
-        logger.LogInformation("Detecting changes in feature images for product '{ExternalId}' - '{ProductName}'", externalId, product.Name);
+        logger.LogInformation("Detecting changes in feature images of product '{ExternalId}' - '{ProductName}'", externalId, product.Name);
         var count = 0;
         foreach (var imageSize in Enum.GetValues<StoneAssemblies.OdooBot.Entities.ImageSize>())
         {
@@ -346,7 +346,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             .FindAsync(SpecificationBuilder.Build<Image>(images =>
                 images.Where(image => image.ProductId == product.Id && image.ExternalId != null)))).ToList();
 
-        logger.LogInformation("Detecting changes in images for '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+        logger.LogInformation("Detecting changes in images of product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
 
         var cache = new Dictionary<long, ProductImageOdooModel>();
 
@@ -491,7 +491,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         var categories = await categoryRepository.All().ToListAsync();
         foreach (var category in categories)
         {
-            logger.LogInformation("Synchronizing new products for category '{Category}'...", category.Name);
+            logger.LogInformation("Synchronizing new products of category '{CategoryName}'...", category.Name);
 
             var productIds = await productRepository
                 .Find(product => product.CategoryId == category.Id)
@@ -532,7 +532,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
                     product.Name = (nameTranslationResult?.Value?.Value ?? productTemplateOdooModel.DisplayName)?.Trim() ?? string.Empty;
 
-                    logger.LogInformation("Adding new product '{ProductName}'", product.Name);
+                    logger.LogInformation("Adding new product '{ProductName}' to category '{CategoryName}'", product.Name, category.Name);
                     var descriptionTranslationResult = await irTranslationRepository
                         .Query()
                         .Where(model => model.ResId, OdooOperator.EqualsTo, product.ExternalId)
@@ -548,7 +548,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     await productRepository.SaveChangesAsync();
                 }
 
-                logger.LogInformation("Synchronized '{ProductCount}' new products for category '{Category}'...", countResult.Value, category.Name);
+                logger.LogInformation("Synchronized '{ProductCount}' new products of category '{CategoryName}'...", countResult.Value, category.Name);
             }
         }
 
@@ -566,11 +566,11 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         var categoryRepository = unitOfWork.GetRepository<Category>();
         await foreach (var productCategoryOdooModel in categoryQuery.GetAsync())
         {
-            logger.LogInformation("Synchronizing category '{Category}'...", productCategoryOdooModel.Name);
-            var category =
-                await categoryRepository.SingleOrDefaultAsync(c => c.ExternalId == productCategoryOdooModel.Id);
+            var category = await categoryRepository.SingleOrDefaultAsync(c => c.ExternalId == productCategoryOdooModel.Id);
             if (category is null)
             {
+                logger.LogInformation("Adding new category '{CategoryName}'...", productCategoryOdooModel.Name);
+
                 category = new Category
                 {
                     Name = productCategoryOdooModel.DisplayName,
@@ -581,14 +581,17 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             }
             else
             {
+                logger.LogInformation("Updating category '{CategoryName}'...", productCategoryOdooModel.Name);
+
                 category.Name = productCategoryOdooModel.DisplayName;
                 categoryRepository.Update(category);
             }
 
             await categoryRepository.SaveChangesAsync();
-            logger.LogInformation("Synchronized category '{Category}'...", productCategoryOdooModel.Name);
+
+            logger.LogInformation("Synchronized category '{CategoryName}'", productCategoryOdooModel.Name);
         }
 
-        logger.LogInformation("Synchronized categories...");
+        logger.LogInformation("Synchronized categories");
     }
 }
