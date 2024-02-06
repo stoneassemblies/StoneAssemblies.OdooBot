@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Coravel.Invocable;
 using Microsoft.EntityFrameworkCore;
 using PortaCapena.OdooJsonRpcClient;
@@ -9,8 +8,10 @@ using StoneAssemblies.OdooBot.Services;
 using StoneAssemblies.OdooBot.Tests;
 using System.Reflection;
 using MethodTimer;
+using PortaCapena.OdooJsonRpcClient.Extensions;
 using StoneAssemblies.OdooBot;
 using StoneAssemblies.OdooBot.Models;
+using static OddooSyncInvocable;
 
 public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProvider provider,
         IOdooRepository<ProductCategoryOdooModel> productCategoryRepository,
@@ -251,6 +252,13 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         }
     }
 
+    public class ImageWithoutContent
+    {
+        public long ExternalId { get; set; }
+        public DateTime? LastUpdate { get; set; }
+        public Guid Id { get; set; }
+    }
+
     [Time]
     private async Task UpdateImagesAsync(ProductTemplateOdooModel productTemplateOdooModel)
     {
@@ -262,7 +270,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
         var imageRepository = unitOfWork.GetRepository<Image>();
 
-        var images = (await imageRepository
+        List<Image> images = (await imageRepository
             .FindAsync(SpecificationBuilder.Build<Image>(images =>
                 images.Where(image => image.ProductId == product.Id && image.ExternalId != null)))).ToList();
 
@@ -275,24 +283,31 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             ProductImageOdooModel? productImageOdooModel;
             if (!cache.TryGetValue(image.ExternalId!.Value, out productImageOdooModel))
             {
-                var query = productImageRepository.Query().ById(image.ExternalId!.Value);
-                if (image.LastUpdate is not null)
-                {
-                    // Important: 1) Use WriteDate 2) Use ToUnixTimeSeconds.
-                    var imageLastUpdate = new DateTimeOffset(image.LastUpdate.Value).ToUnixTimeSeconds();
-                    query = query.Where(model => model.WriteDate, OdooOperator.GreaterThan, imageLastUpdate);
-                }
-
+                var query = productImageRepository.Query().ById(image.ExternalId.Value).Select(model => new { model.WriteDate });
                 var result = await query.FirstOrDefaultAsync();
-                productImageOdooModel = result?.Value;
 
-                if (productImageOdooModel is not null)
+                // PATCH: this is not working => query = query.Where(model => model.WriteDate, OdooOperator.GreaterThan, imageLastUpdate);
+                if (result?.Value?.WriteDate > image.LastUpdate)
                 {
-                    cache[image.ExternalId!.Value] = productImageOdooModel;
+                    cache[image.ExternalId.Value] = result.Value;
+                    query = query.Select(model => new
+                    {
+                        model.Image128,
+                        model.Image256,
+                        model.Image512,
+                        model.Image1024,
+                        model.Image1920,
+                    });
+
+                    result = await query.FirstOrDefaultAsync();
+                    if (result?.Value is not null)
+                    {
+                        productImageOdooModel = cache[image.ExternalId.Value] = result.Value;
+                    }
                 }
             }
 
-            if (productImageOdooModel is not null)
+            if (productImageOdooModel is not null && productImageOdooModel.WriteDate > image.LastUpdate)
             {
                 logger.LogInformation("Detected change in images of product '{OdooProductId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
 
@@ -313,7 +328,9 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
                             var content = Convert.FromBase64String(encodeContent);
                             image.Content = content;
-                            image.LastUpdate = productImageOdooModel.WriteDate;
+                            image.LastUpdate = productImageOdooModel.WriteDate!.Value.Date;
+                            imageRepository.Update(image);
+
                             await imageRepository.SaveChangesAsync();
 
                             logger.LogInformation(
@@ -329,52 +346,56 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             }
         }
 
-        var imageQuery = productImageRepository.Query()
-            .Where(model => model.Id, OdooOperator.In, productTemplateImageIds);
-        var imageIds = images.Select(image => image.ExternalId).Distinct().ToList();
-        if (imageIds.Count > 0)
+        var productIds = productTemplateImageIds.ToHashSet();
+        foreach (var id in images.Select(image => image.ExternalId!.Value).Distinct())
         {
-            imageQuery = imageQuery.Where(productImageOdooModel => productImageOdooModel.Id, OdooOperator.NotIn, imageIds);
+            productIds.Remove(id);
         }
 
-        await foreach (var productImageOdooModel in imageQuery.GetAsync())
+        if (productIds.Count > 0)
         {
-            foreach (var imageSize in Enum.GetValues<ImageSize>())
+            var imageQuery = productImageRepository.Query()
+                .Where(model => model.Id, OdooOperator.In, productIds);
+
+            await foreach (var productImageOdooModel in imageQuery.GetAsync())
             {
-                var encodeContent = typeof(ProductImageOdooModel).GetProperty(
-                        string.Format(ImagePropertyFormat, Convert.ToInt32(imageSize)),
-                        BindingFlags.Public | BindingFlags.Instance)?.GetValue(productImageOdooModel)
-                    ?.ToString();
-
-                if (!string.IsNullOrWhiteSpace(encodeContent))
+                foreach (var imageSize in Enum.GetValues<ImageSize>())
                 {
-                    try
+                    var encodeContent = typeof(ProductImageOdooModel).GetProperty(
+                            string.Format(ImagePropertyFormat, Convert.ToInt32(imageSize)),
+                            BindingFlags.Public | BindingFlags.Instance)?.GetValue(productImageOdooModel)
+                        ?.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(encodeContent))
                     {
-                        var content = Convert.FromBase64String(encodeContent);
-
-                        logger.LogInformation(
-                            "Adding new image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
-
-                        var image = new Image
+                        try
                         {
-                            ProductId = product.Id,
-                            ExternalId = productImageOdooModel.Id,
-                            Size = imageSize,
-                            LastUpdate = productImageOdooModel.WriteDate,
-                            Content = content,
-                            IsFeatured = false
-                        };
+                            var content = Convert.FromBase64String(encodeContent);
 
-                        imageRepository.Add(image);
-                        await imageRepository.SaveChangesAsync();
+                            logger.LogInformation(
+                                "Adding new image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
 
-                        logger.LogInformation(
-                            "Added new image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex,
-                            "Error adding image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                            var image = new Image
+                            {
+                                ProductId = product.Id,
+                                ExternalId = productImageOdooModel.Id,
+                                Size = imageSize,
+                                LastUpdate = productImageOdooModel.WriteDate,
+                                Content = content,
+                                IsFeatured = false
+                            };
+
+                            imageRepository.Add(image);
+                            await imageRepository.SaveChangesAsync();
+
+                            logger.LogInformation(
+                                "Added new image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex,
+                                "Error adding image of size '{ImageSize}' to product '{OdooProductId}' - '{ProductName}'", imageSize, productTemplateOdooModel.Id, product.Name);
+                        }
                     }
                 }
             }
