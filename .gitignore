@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 tools
 dotnet.csproj.tar.gz
+output

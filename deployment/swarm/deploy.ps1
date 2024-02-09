@@ -46,7 +46,7 @@ Write-Host "=================================="
 
 docker rm -f odoo-bot
 $commandBuilder = [System.Text.StringBuilder]::new()
-Add-ContainerCreate $commandBuilder "odoo-bot"  -targetPort 6000 -publishedPort 80
+Add-ContainerCreate $commandBuilder "odoo-bot"  -targetPort 8084 -publishedPort 80
 
 $secrets = @()
 $environmentVariables = @("BOT_ODOO_APIURL", "BOT_ODOO_DATABASE", "BOT_ODOO_USERNAME", "BOT_ODOO_PASSWORD")
@@ -68,7 +68,7 @@ $commandBuilder.Append("-v /data/odoo-bot:/app/data ")
 $commandBuilder.Append("$dockerRepositoryProxy/stone-assemblies-odoo-bot:${VERSION_NUMBER}".Trim("/"))
 $command = $commandBuilder.ToString()
 
-Write-Host $command
+# Write-Host $command
 
 $scriptBlock = [ScriptBlock]::Create($command)
 Invoke-Command $scriptBlock

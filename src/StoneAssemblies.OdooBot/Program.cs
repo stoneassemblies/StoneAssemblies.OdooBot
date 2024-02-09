@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using QuestPDF.Infrastructure;
 using Blorc.Services;
+using System.Net;
 
 QuestPDF.Settings.License = LicenseType.Community;
 QuestPDF.Settings.EnableDebugging = true;
@@ -106,7 +107,7 @@ builder.Services.AddScoped(typeof(OdooConfig), (provider) =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
     var configurationSection = configuration.GetSection("Odoo");
-    var apiUrl  = configurationSection["ApiUrl"];
+    var apiUrl = configurationSection["ApiUrl"];
     var database = configurationSection["Database"];
     var username = configurationSection["Username"];
     var password = configurationSection["Password"];
@@ -121,6 +122,11 @@ builder.Services.AddHttpClient<ICatalogServiceClient, CatalogServiceClient>((ser
 {
     var server = serviceProvider.GetRequiredService<IServer>();
     var baseAddress = server.Features.Get<IServerAddressesFeature>()!.Addresses.FirstOrDefault();
+    if (baseAddress!.Contains("0.0.0.0"))
+    {
+        baseAddress = baseAddress.Replace("0.0.0.0", "127.0.0.1");
+    }
+
     client.BaseAddress = new Uri(baseAddress!);
 });
 
