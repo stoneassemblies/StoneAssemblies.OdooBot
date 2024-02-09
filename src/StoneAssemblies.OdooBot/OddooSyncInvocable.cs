@@ -225,7 +225,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
         if (product is null)
         {
-            logger.LogInformation("Update feature images of product '{ExternalId}'.", externalId);
+            logger.LogInformation("Update feature images of product '{ExternalId}' skipped. Product not found.", externalId);
             return;
         }
 
@@ -242,7 +242,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         var productTemplateOdooModel = queryResult.Value;
         if (productTemplateOdooModel is null)
         {
-            logger.LogInformation("Unable to retrieve feature images of product skipped. Product '{ExternalId}' not found.", externalId);
+            logger.LogInformation("Unable to retrieve feature images of product '{ExternalId}' skipped.", externalId);
             return;
         }
 
@@ -321,7 +321,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
 
         if (product is null)
         {
-            logger.LogInformation("Update images of product skipped. Product '{ExternalId}' not found.", externalId);
+            logger.LogInformation("Update images of product '{ExternalId}' skipped. Product not found.", externalId);
             return;
         }
 
