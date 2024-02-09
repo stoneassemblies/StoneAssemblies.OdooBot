@@ -10,6 +10,7 @@
 
 @if (Category is not null)
 {
+    <PageTitle>@Category.Name</PageTitle>
     <FluentLabel Typo="Typography.Header" style="text-align: center"> @Category.Name </FluentLabel>
 
     <FluentDataGrid ItemsProvider="_productsProvider" ItemSize="46" Pagination="_paginationState" GridTemplateColumns="0.1fr 0.5fr 1fr 0.5fr" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="ProductPreviewViewModel">
@@ -32,8 +33,9 @@
 }
 else if(Categories?.Count > 0)
 {
+    <PageTitle>All Categories</PageTitle>
     <FluentStack Style="margin: 20px;" Orientation="Orientation.Vertical">
-        <FluentCheckbox Label="All" @bind-Value="AreAllCategoriesSelected"/> 
+        <FluentCheckbox Label="All Categories" @bind-Value="AreAllCategoriesSelected" />
         @foreach (var category in this.Categories)
         {
             bool isChecked = SelectedCategories.Contains(category.Id);

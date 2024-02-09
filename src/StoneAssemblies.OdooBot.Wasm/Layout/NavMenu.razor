@@ -13,7 +13,7 @@
             <FluentNavLink Href="weather" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Weather</FluentNavLink>
             *@
             <FluentNavGroup Title="Catalog" Icon="@(new Icons.Regular.Size20.ShoppingBag())">
-                <FluentNavLink Href="/catalog" Match="NavLinkMatch.All" Icon="@(new Icons.Filled.Size16.ShoppingBag())" IconColor="Color.Accent">All</FluentNavLink>
+                <FluentNavLink Href="/catalog" Match="NavLinkMatch.All" Icon="@(new Icons.Filled.Size16.ShoppingBag())" IconColor="Color.Accent">All Categories</FluentNavLink>
                 @if (categories is not null)
                 {
                     foreach (var item in categories)
