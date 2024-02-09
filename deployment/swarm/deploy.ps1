@@ -41,12 +41,12 @@ if (Test-Path $dockerImagesPath)
 
 
 Write-Host "=================================="
-Write-Host "Installing Odoo-Bot Server ..."
+Write-Host "Installing Odoo-Bot ..."
 Write-Host "=================================="
 
-docker service rm tempore-server
+docker rm odoo-bot
 $commandBuilder = [System.Text.StringBuilder]::new()
-Add-HostServiceCreate $commandBuilder "tempore-server" 80 6000
+Add-ContainerCreate $commandBuilder "odoo-bot"  -targetPort 80 -publishedPort 6000
 
 $secrets = @()
 $environmentVariables = @("BOT_ODOO_APIURL", "BOT_ODOO_DATABASE", "BOT_ODOO_USERNAME", "BOT_ODOO_PASSWORD")
