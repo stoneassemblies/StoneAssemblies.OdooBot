@@ -44,7 +44,7 @@ Write-Host "=================================="
 Write-Host "Installing Odoo-Bot ..."
 Write-Host "=================================="
 
-docker rm odoo-bot
+docker rm -f odoo-bot
 $commandBuilder = [System.Text.StringBuilder]::new()
 Add-ContainerCreate $commandBuilder "odoo-bot"  -targetPort 80 -publishedPort 6000
 
