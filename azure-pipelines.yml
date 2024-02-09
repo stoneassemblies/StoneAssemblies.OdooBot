@@ -40,3 +40,10 @@ steps:
     PathtoPublish: './output/docker/'
     ArtifactName: 'docker'
     publishLocation: 'Container'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Swarm Deployment Artifacts'
+  inputs:
+    PathtoPublish: './output/deployment/swarm'
+    ArtifactName: 'deployment-swarm'
+    publishLocation: 'Container'
