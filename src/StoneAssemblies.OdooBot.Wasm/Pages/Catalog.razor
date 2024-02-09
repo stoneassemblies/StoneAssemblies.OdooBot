@@ -14,7 +14,9 @@
 
     <FluentDataGrid ItemsProvider="_productsProvider" ItemSize="46" Pagination="_paginationState" GridTemplateColumns="0.1fr 0.5fr 1fr 0.5fr" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="ProductPreviewViewModel">
         <PropertyColumn Title="Id" Property="@(c => c!.ExternalId)" />
-        <PropertyColumn Title="Name" Property="@(c => c!.Name)" />
+        <TemplateColumn Title="Name">
+            <div style="white-space: pre-line">@context.Name</div>
+        </TemplateColumn>      
         <TemplateColumn Title="Description">
             <div style="white-space: pre-line">@context.Description</div>
         </TemplateColumn>      
