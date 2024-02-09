@@ -1,0 +1,43 @@
+﻿@page "/catalog"
+@page "/catalog/{CategoryId:guid}"
+@using StoneAssemblies.OdooBot.Client
+
+@rendermode InteractiveWebAssembly
+
+<FluentToastProvider />
+
+<FluentButton style="width: 100%" Appearance="Appearance.Stealth" IconStart="@(new Icons.Filled.Size16.Document())" OnClick="DownloadDocumentAsync" Loading="_isDownloading" Disabled="@(this.SelectedCategories.Count == 0 && this.CategoryId is null)">Download</FluentButton>
+
+@if (Category is not null)
+{
+    <FluentLabel Typo="Typography.Header" style="text-align: center"> @Category.Name </FluentLabel>
+
+    <FluentDataGrid ItemsProvider="_productsProvider" ItemSize="46" Pagination="_paginationState" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="ProductPreviewViewModel" >
+        <PropertyColumn Title="Id" Property="@(c => c!.ExternalId)" />
+        <PropertyColumn Title="Name" Property="@(c => c!.Name)" />
+        <TemplateColumn Title="Description">
+            <div style="white-space: pre-line">@context.Description</div>
+        </TemplateColumn>      
+        <TemplateColumn Title="Image">
+            @if (!string.IsNullOrWhiteSpace(context.ReferenceImage))
+            {
+                <img src="@context.ReferenceImage" />
+            }
+        </TemplateColumn>
+    </FluentDataGrid>
+
+    <FluentPaginator State="@_paginationState" />
+}
+else if(Categories?.Count > 0)
+{
+    <FluentStack Style="margin: 20px;" Orientation="Orientation.Vertical">
+        <FluentCheckbox Label="All" @bind-Value="AreAllCategoriesSelected"/> 
+        @foreach (var category in this.Categories)
+        {
+            bool isChecked = SelectedCategories.Contains(category.Id);
+            <FluentCheckbox Label="@category.Name"
+                            @bind-Value:get="isChecked"
+                            @bind-Value:set="(c) => OnCheckedChanged(category.Id, c)" />
+        }
+    </FluentStack>    
+}

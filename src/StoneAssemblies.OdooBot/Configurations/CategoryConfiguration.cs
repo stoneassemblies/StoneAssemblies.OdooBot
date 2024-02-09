@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using StoneAssemblies.OdooBot.Entities;
 
-namespace StoneAssemblies.OdooBot.Entities.Configurations;
+namespace StoneAssemblies.OdooBot.Configurations;
 
 public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 {
@@ -9,6 +10,5 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
     {
         builder
             .HasIndex(category => category.ExternalId).IsUnique();
-
     }
 }

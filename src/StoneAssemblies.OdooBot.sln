@@ -3,9 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34518.117
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoneAssemblies.OdooBot", "StoneAssemblies.OdooBot\StoneAssemblies.OdooBot.csproj", "{89AF08C3-B14E-43D5-AAEF-40FA61718F8A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.OdooBot", "StoneAssemblies.OdooBot\StoneAssemblies.OdooBot.csproj", "{89AF08C3-B14E-43D5-AAEF-40FA61718F8A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoneAssemblies.OdooBot.Tests", "StoneAssemblies.OdooBot.Tests\StoneAssemblies.OdooBot.Tests.csproj", "{477994F5-0852-455A-BDE0-A5F9808C983E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.OdooBot.Tests", "StoneAssemblies.OdooBot.Tests\StoneAssemblies.OdooBot.Tests.csproj", "{477994F5-0852-455A-BDE0-A5F9808C983E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0D5F9AAF-8FEF-408B-8A0C-473F7D6EA53F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.OdooBot.Wasm", "StoneAssemblies.OdooBot.Wasm\StoneAssemblies.OdooBot.Wasm.csproj", "{13E3BD97-2E54-4A3F-9FA8-986D4506FD7E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.OdooBot.Client", "StoneAssemblies.OdooBot.Client\StoneAssemblies.OdooBot.Client.csproj", "{ECD286A4-2DFF-47BF-8FB7-A07F7542C51F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +27,22 @@ Global
 		{477994F5-0852-455A-BDE0-A5F9808C983E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{477994F5-0852-455A-BDE0-A5F9808C983E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{477994F5-0852-455A-BDE0-A5F9808C983E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13E3BD97-2E54-4A3F-9FA8-986D4506FD7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13E3BD97-2E54-4A3F-9FA8-986D4506FD7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13E3BD97-2E54-4A3F-9FA8-986D4506FD7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13E3BD97-2E54-4A3F-9FA8-986D4506FD7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECD286A4-2DFF-47BF-8FB7-A07F7542C51F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECD286A4-2DFF-47BF-8FB7-A07F7542C51F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECD286A4-2DFF-47BF-8FB7-A07F7542C51F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECD286A4-2DFF-47BF-8FB7-A07F7542C51F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{89AF08C3-B14E-43D5-AAEF-40FA61718F8A} = {0D5F9AAF-8FEF-408B-8A0C-473F7D6EA53F}
+		{13E3BD97-2E54-4A3F-9FA8-986D4506FD7E} = {0D5F9AAF-8FEF-408B-8A0C-473F7D6EA53F}
+		{ECD286A4-2DFF-47BF-8FB7-A07F7542C51F} = {0D5F9AAF-8FEF-408B-8A0C-473F7D6EA53F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CACCED5B-802B-480E-B850-2E3305C72688}

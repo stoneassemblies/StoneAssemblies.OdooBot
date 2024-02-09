@@ -1,33 +1,68 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
-
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>dotnet-StoneAssemblies.OdooBot-086e14bd-61b7-41c4-b086-a83f8ce60e31</UserSecretsId>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Resources\banner.png" />
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="Resources\banner.png" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="AngleSharp" Version="1.1.0" />
 		<PackageReference Include="Coravel" Version="5.0.2" />
 		<PackageReference Include="Fody" Version="6.8.0">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Mapster" Version="7.4.1-pre01" />
+		<PackageReference Include="MediatR" Version="12.2.0" />
 		<PackageReference Include="MethodTimer.Fody" Version="3.2.2" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+                <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.*-*" />
+                <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.1" />
+                <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />		
+                <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.1">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="MMLib.MediatR.Generators" Version="1.2.0" />
 		<PackageReference Include="PortaCapena.OdooJsonRpcClient" Version="1.0.20" />
-		<PackageReference Include="QuestPDF" Version="2023.12.4" />
+		<PackageReference Include="QuestPDF" Version="2023.12.5" />
 		<PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
 		<PackageReference Include="StoneAssemblies.EntityFrameworkCore" Version="1.0.0-alpha0020" />
+		
 	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.*-* " />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*-* " />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\StoneAssemblies.OdooBot.Wasm\StoneAssemblies.OdooBot.Wasm.csproj" />
+	</ItemGroup>
+
+	<Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
+	   <Exec Command="dotnet swagger tofile --output swagger.json $(TargetPath) v1" />
+	</Target>
+
+	<Target Name="Mapster" AfterTargets="AfterBuild">
+		<!--<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tool restore" />-->
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet mapster model -a &quot;$(TargetDir)$(ProjectName).dll&quot; -o &quot;$(ProjectDir)DataTransferObjects&quot; -n &quot;StoneAssemblies.OdooBot.DataTransferObjects&quot;" />
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet mapster extension -a &quot;$(TargetDir)$(ProjectName).dll&quot;" />
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet mapster mapper -a &quot;$(TargetDir)$(ProjectName).dll&quot;" />
+	</Target>
 </Project>
