@@ -68,9 +68,10 @@ $commandBuilder.Append("-v /data/odoo-bot:/app/data ")
 $commandBuilder.Append("$dockerRepositoryProxy/stone-assemblies-odoo-bot:${VERSION_NUMBER}")
 $command = $commandBuilder.ToString()
 
+Write-Host $command
+
 $scriptBlock = [ScriptBlock]::Create($command)
 Invoke-Command $scriptBlock
 if ($LASTEXITCODE -ne 0) {
 	Write-Error 'Error creating docker swarm stone-assemblies-odoo-bot' -ErrorAction Stop
 }
-
