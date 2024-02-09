@@ -41,15 +41,15 @@ if (Test-Path $dockerImagesPath)
 
 
 Write-Host "=================================="
-Write-Host "Installing Tempore Server ..."
+Write-Host "Installing Odoo-Bot Server ..."
 Write-Host "=================================="
 
 docker service rm tempore-server
 $commandBuilder = [System.Text.StringBuilder]::new()
 Add-HostServiceCreate $commandBuilder "tempore-server" 80 6000
 
-$secrets = @("TMP_IDENTITYSERVER_PASSWORD_SECRET", "TMP_CONNECTIONSTRINGS_APPLICATIONDATABASE_PASSWORD_SECRET", "TMP_IDENTITYSERVER_APPPASSWORD_SECRET")
-$environmentVariables = @("TMP_CONNECTIONSTRINGS_APPLICATIONDATABASE", "TMP_IDENTITYSERVER_AUTHORITY", "TMP_IDENTITYSERVER_USERNAME", "TMP_IDENTITYSERVER_PASSWORD", "TMP_IDENTITYSERVER_ALLOWUNTRUSTEDCERTIFICATES", "TMP_IDENTITYSERVER_APPINGRESS", "TMP_IDENTITYSERVER_APPUSERNAME", "TMP_IDENTITYSERVER_APPPASSWORD")
+$secrets = @()
+$environmentVariables = @("BOT_ODOO_APIURL", "BOT_ODOO_DATABASE", "BOT_ODOO_USERNAME", "BOT_ODOO_PASSWORD")
 foreach($environmentVariable in $environmentVariables)
 {
 	$environmentVariableValue = [System.Environment]::GetEnvironmentVariable($environmentVariable)
