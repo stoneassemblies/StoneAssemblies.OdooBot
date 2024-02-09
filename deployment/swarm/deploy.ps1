@@ -65,7 +65,7 @@ foreach($environmentVariable in $environmentVariables)
 # required for service discovery.
 $commandBuilder.Append("--env APP_INSTANCE=`"0`" ")
 $commandBuilder.Append("-v /data/odoo-bot:/app/data ")
-$commandBuilder.Append("$dockerRepositoryProxy/stone-assemblies-odoo-bot:${VERSION_NUMBER}")
+$commandBuilder.Append("$dockerRepositoryProxy/stone-assemblies-odoo-bot:${VERSION_NUMBER}".Trim("/"))
 $command = $commandBuilder.ToString()
 
 Write-Host $command
