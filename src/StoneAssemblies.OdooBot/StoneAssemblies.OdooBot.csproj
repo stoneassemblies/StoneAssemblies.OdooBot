@@ -34,6 +34,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="7.3.0.1" />
 		<PackageReference Include="Mapster" Version="7.4.1-pre01" />
 		<PackageReference Include="MediatR" Version="12.2.0" />
 		<PackageReference Include="MethodTimer.Fody" Version="3.2.2" />
