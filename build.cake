@@ -324,7 +324,7 @@ Task("DockerBuild")
       }
     }
 
-    /*	
+    	
     var swarmTemplateDeployFile = $"./deployment/swarm/deploy.ps1";
     var swarmDeployFile = $"./output/deployment/swarm/deploy.ps1";
     if (FileExists(swarmTemplateDeployFile))
@@ -333,9 +333,9 @@ Task("DockerBuild")
       CopyFile(swarmTemplateDeployFile, swarmDeployFile);
       ReplaceTextInFiles(swarmDeployFile, "${VERSION_NUMBER}", NuGetVersionV2);
 
-      CopyDirectory("./deployment/config", "./output/deployment/swarm/config");
+      // CopyDirectory("./deployment/config", "./output/deployment/swarm/config");
     }
-    */
+    
 
     for (int i = 0; i < DockerFiles.Length; i++)
     {
