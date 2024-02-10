@@ -21,10 +21,12 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
         private ICatalogServiceClient CatalogServiceClient { get; set; }
 
         [Inject]
-        private IServiceProvider ServiceProvider { get; set; }
-        
-        [Inject]
         private IToastService ToastService { get; set; }
+
+        [Inject]
+        private IServiceProvider ServiceProvider { get; set; }
+
+        private IFileService FileService => this.ServiceProvider.GetRequiredService<IFileService>();
 
         public bool AreAllCategoriesSelected
         {
@@ -99,8 +101,7 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
 
                 var fileResult = await this.CatalogServiceClient.DownloadDocumentByCategoryIdsAsync(request);
 
-                var fileService = this.ServiceProvider.GetRequiredService<IFileService>();
-                await fileService.SaveAsync(fileResult.FileName, fileResult.Content);
+                await FileService.SaveAsync(fileResult.FileName, fileResult.Content);
 
                 ToastService.ShowToast(ToastIntent.Download, "Catalog file have been successfully generated. Please check your browser’s download manager.");
             }
@@ -109,7 +110,6 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
                 _isDownloading = false;
             }
         }
-
         private void OnCheckedChanged(Guid categoryId, bool isChecked)
         {
             if (isChecked)

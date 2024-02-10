@@ -19,6 +19,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddHttpClient<ICatalogServiceClient, CatalogServiceClient>(client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
 
 builder.Services.AddBlorcCore();
+
 builder.Services.AddFluentUIComponents();
 
 var webAssemblyHost = builder.Build();
