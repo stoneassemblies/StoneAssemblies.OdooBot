@@ -117,7 +117,6 @@ builder.Services.AddScoped(typeof(OdooConfig), (provider) =>
 
 builder.Services.AddScoped(typeof(IOdooRepository<>), typeof(OdooRepository<>));
 
-
 builder.Services.AddHttpClient<ICatalogServiceClient, CatalogServiceClient>((serviceProvider, client) =>
 {
     var server = serviceProvider.GetRequiredService<IServer>();
@@ -129,9 +128,6 @@ builder.Services.AddHttpClient<ICatalogServiceClient, CatalogServiceClient>((ser
 
     client.BaseAddress = new Uri(baseAddress!);
 });
-
-// TODO: Why?
-builder.Services.AddScoped<IFileService, FakeFileService>();
 
 var app = builder.Build();
 
@@ -196,12 +192,4 @@ catch (Exception ex)
     logger.Fatal(ex, "Host terminated unexpectedly");
 
     Log.CloseAndFlush();
-}
-
-public class FakeFileService : IFileService
-{
-    public Task SaveAsync(string fileName, byte[] data)
-    {
-        throw new NotImplementedException();
-    }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.FluentUI.AspNetCore.Components;
 using StoneAssemblies.OdooBot.Client;
+using StoneAssemblies.OdooBot.Wasm.ViewModels;
 
 namespace StoneAssemblies.OdooBot.Wasm.Pages
 {
@@ -20,8 +21,8 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
         private ICatalogServiceClient CatalogServiceClient { get; set; }
 
         [Inject]
-        private IFileService FileService { get; set; }
-
+        private IServiceProvider ServiceProvider { get; set; }
+        
         [Inject]
         private IToastService ToastService { get; set; }
 
@@ -30,7 +31,7 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
             get => SelectedCategories.Count == Categories.Count;
             set
             {
-                if (value == true)
+                if (value)
                 {
                     SelectedCategories.UnionWith(Categories.Select(dto => dto.Id));
                 }
@@ -41,9 +42,11 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
             }
         }
 
-        public bool _isDownloading = false;
+        private bool _isDownloading;
 
-        private GridItemsProvider<ProductPreviewViewModel> _productsProvider = default!;
+        private bool _isLoading = true;
+
+        private GridItemsProvider<ProductDetailsViewModel> _productsProvider = default!;
 
         private PaginationState _paginationState = new PaginationState
         {
@@ -55,41 +58,24 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
             if (CategoryId is not null)
             {
                 this.Category = await this.CatalogServiceClient.GetCategoryByIdAsync(CategoryId);
-
                 _productsProvider = async request =>
                 {
-                    var pagedResult = await CatalogServiceClient.GetProductsByCategoryIdAsync(CategoryId, request.StartIndex, request.Count);
-                    var productPreviewViewModels = pagedResult.Items.Select(dto => new ProductPreviewViewModel(dto)).ToList();
-                    return GridItemsProviderResult.From(items: productPreviewViewModels,
-                        totalItemCount: pagedResult.Count);
+                    try
+                    {
+                        var pagedResult = await CatalogServiceClient.GetProductsByCategoryIdAsync(CategoryId, request.StartIndex, request.Count);
+                        var productPreviewViewModels = pagedResult.Items.Select(dto => new ProductDetailsViewModel(dto)).ToList();
+                        return GridItemsProviderResult.From(items: productPreviewViewModels,
+                            totalItemCount: pagedResult.Count);
+                    }
+                    finally
+                    {
+                        _isLoading = false;
+                    }
                 };
             }
             else
             {
                 this.Categories = await this.CatalogServiceClient.GetCategoriesAsync();
-            }
-        }
-
-        public class ProductPreviewViewModel(ProductDetails product)
-        {
-            public long ExternalId => product.ExternalId;
-
-            public string Name => product.Name;
-
-            public string Description => product.Description;
-
-            public string ReferenceImage
-            {
-                get
-                {
-                    var image = product.FeatureImages.FirstOrDefault();
-                    if (image is null)
-                    {
-                        return string.Empty;
-                    }
-
-                    return $"data:image/png;base64, {Convert.ToBase64String(image.Content)}";
-                }
             }
         }
 
@@ -112,7 +98,9 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
                 }
 
                 var fileResult = await this.CatalogServiceClient.DownloadDocumentByCategoryIdsAsync(request);
-                await this.FileService.SaveAsync(fileResult.FileName, fileResult.Content);
+
+                var fileService = this.ServiceProvider.GetRequiredService<IFileService>();
+                await fileService.SaveAsync(fileResult.FileName, fileResult.Content);
 
                 ToastService.ShowToast(ToastIntent.Download, "Catalog file have been successfully generated. Please check your browser’s download manager.");
             }
@@ -122,7 +110,7 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
             }
         }
 
-        private Task OnCheckedChanged(Guid categoryId, bool isChecked)
+        private void OnCheckedChanged(Guid categoryId, bool isChecked)
         {
             if (isChecked)
             {
@@ -132,8 +120,6 @@ namespace StoneAssemblies.OdooBot.Wasm.Pages
             {
                 this.SelectedCategories.Remove(categoryId);
             }
-
-            return Task.CompletedTask;
         }
     }
 }
