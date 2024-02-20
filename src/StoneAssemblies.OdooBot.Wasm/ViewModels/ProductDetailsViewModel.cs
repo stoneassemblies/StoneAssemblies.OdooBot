@@ -10,6 +10,10 @@ namespace StoneAssemblies.OdooBot.Wasm.ViewModels
 
         public string Description => product.Description;
 
+        public string QuantityUnit => product.QuantityUnit;
+
+        public double InStockQuantity => product.InStockQuantity;
+
         public string ReferenceImage
         {
             get

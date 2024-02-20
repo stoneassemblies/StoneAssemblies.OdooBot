@@ -447,6 +447,14 @@
               "$ref": "#/components/schemas/Image"
             },
             "nullable": true
+          },
+          "inStockQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantityUnit": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -467,6 +475,14 @@
             "nullable": true
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "inStockQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantityUnit": {
             "type": "string",
             "nullable": true
           },
@@ -533,6 +549,14 @@
             "items": {
               "$ref": "#/components/schemas/ImageDto"
             },
+            "nullable": true
+          },
+          "inStockQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantityUnit": {
+            "type": "string",
             "nullable": true
           }
         },

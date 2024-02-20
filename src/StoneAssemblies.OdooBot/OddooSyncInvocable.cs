@@ -117,6 +117,8 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         {
             model.Id,
             model.DescriptionSale,
+            model.QtyAvailable,
+            model.UomName
         }).FirstOrDefaultAsync();
 
         var productTemplateOdooModel = queryResult?.Value;
@@ -127,6 +129,14 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         }
 
         logger.LogInformation("Detecting changes in product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+
+        var inStockQuantity = productTemplateOdooModel.QtyAvailable.GetValueOrDefault(0.0d);
+        if (Math.Abs(product.InStockQuantity - inStockQuantity) > 0.0001 || product.QuantityUnit != productTemplateOdooModel.UomName)
+        {
+            changeDetected = true;
+            product.InStockQuantity = inStockQuantity;
+            product.QuantityUnit = productTemplateOdooModel.UomName;
+        }
 
         var nameTranslationResult = await irTranslationRepository
             .Query()
@@ -511,7 +521,9 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                 {
                     productTemplateOdooModel.Id,
                     productTemplateOdooModel.DisplayName,
-                    productTemplateOdooModel.DescriptionSale
+                    productTemplateOdooModel.DescriptionSale,
+                    productTemplateOdooModel.QtyAvailable,
+                    productTemplateOdooModel.UomName
                 });
 
                 await foreach (var productTemplateOdooModel in productTemplateQuery.GetAsync())
@@ -520,6 +532,8 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     {
                         CategoryId = category.Id,
                         ExternalId = productTemplateOdooModel.Id,
+                        InStockQuantity = productTemplateOdooModel.QtyAvailable.GetValueOrDefault(0.0d),
+                        QuantityUnit = productTemplateOdooModel.UomName,
                     };
 
                     var nameTranslationResult = await irTranslationRepository

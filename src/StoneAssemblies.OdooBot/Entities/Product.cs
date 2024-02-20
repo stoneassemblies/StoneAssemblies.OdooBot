@@ -18,4 +18,8 @@ public class Product
     public string Description { get; set; }
 
     public List<Image> Images { get; set; }
+
+    public double InStockQuantity { get; set; }
+    
+    public string QuantityUnit { get; set; }
 }
