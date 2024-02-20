@@ -147,16 +147,21 @@ public class DownloadDocumentByCategoryIdRequestHandler
                                     });
                                 }
 
+                                x.Item().Row(r =>
+                                    {
+                                        r.AutoItem().Text($"Disponibilidad: ").SemiBold().FontSize(12);
+                                        r.AutoItem().Text($"{product.InStockQuantity:0.##} {product.QuantityUnit}").NormalWeight().FontSize(12); ;
+                                    });
+
+                                x.Item().Text("Descripción:").SemiBold().SemiBold().FontSize(12);
                                 var productDescription = product.Description?.Trim();
                                 if (!string.IsNullOrWhiteSpace(productDescription))
                                 {
-                                    x.Item().Text(productDescription).FontSize(12)
-                                        ;
+                                    x.Item().Text(productDescription).FontSize(12);
                                 }
                                 else
                                 {
-                                    x.Item().Text("[Sin descripción]").FontSize(12)
-                                        ;
+                                    x.Item().Text("[Sin descripción]").FontSize(12);
                                 }
                             });
 
