@@ -40,6 +40,7 @@
 		<PackageReference Include="MethodTimer.Fody" Version="3.2.2" />
                 <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.*-*" />
                 <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.1" />
+                <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.2.4" />
                 <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />		
                 <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
 			<PrivateAssets>all</PrivateAssets>
