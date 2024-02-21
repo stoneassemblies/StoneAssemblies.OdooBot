@@ -15,6 +15,8 @@ using ImageSize = StoneAssemblies.OdooBot.Entities.ImageSize;
 
 namespace StoneAssemblies.OdooBot.Handlers;
 
+using Unit = QuestPDF.Infrastructure.Unit;
+
 public class DownloadDocumentByCategoryIdRequestHandler
 (IRepository<Category, ApplicationDbContext> categoryRepository,
     IRepository<Category, ApplicationDbContext> productRepository,
@@ -62,14 +64,14 @@ public class DownloadDocumentByCategoryIdRequestHandler
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
-                page.Margin(2, QuestPDF.Infrastructure.Unit.Centimetre);
+                page.Margin(2, Unit.Centimetre);
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontSize(20));
 
                 page.Header()
                     .AlignCenter()
                     .PaddingTop(100)
-                    .Text("Catágolo ConsuPC")
+                    .Text("Catálogo - ConsuPC")
                     .Bold()
                     .FontSize(36)
                     .FontColor(Colors.Blue.Darken4);
@@ -96,7 +98,7 @@ public class DownloadDocumentByCategoryIdRequestHandler
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(2, QuestPDF.Infrastructure.Unit.Centimetre);
+                    page.Margin(2, Unit.Centimetre);
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(20));
 
@@ -114,7 +116,7 @@ public class DownloadDocumentByCategoryIdRequestHandler
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4);
-                        page.Margin(2, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.Margin(2, Unit.Centimetre);
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontSize(20));
 
@@ -126,7 +128,7 @@ public class DownloadDocumentByCategoryIdRequestHandler
                             .FontColor(Colors.Blue.Darken4);
 
                         page.Content()
-                            .PaddingVertical(1, QuestPDF.Infrastructure.Unit.Centimetre)
+                            .PaddingVertical(1, Unit.Centimetre)
                             .Column(x =>
                             {
                                 x.Spacing(20);
@@ -149,7 +151,7 @@ public class DownloadDocumentByCategoryIdRequestHandler
 
                                 x.Item().Row(r =>
                                     {
-                                        r.AutoItem().Text($"Disponibilidad: ").SemiBold().FontSize(12);
+                                        r.AutoItem().Text("Disponibilidad: ").SemiBold().FontSize(12);
                                         r.AutoItem().Text($"{product.InStockQuantity:0.##} {product.QuantityUnit}").NormalWeight().FontSize(12); ;
                                     });
 

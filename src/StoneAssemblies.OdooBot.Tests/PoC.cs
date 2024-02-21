@@ -157,11 +157,12 @@ public class PoC
                     {
                         foreach (var productTemplateOdooModel in productTemplatesResult.Value)
                         {
+                            var uomName = productTemplateOdooModel.UomName;
                             var product = new Product
-                            {
-                                Id = productTemplateOdooModel.Id,
-                                Images = new Dictionary<string, List<string>>()
-                            };
+                                              {
+                                                  Id = productTemplateOdooModel.Id,
+                                                  Images = new Dictionary<string, List<string>>()
+                                              };
 
                             foreach (var imageKey in imageResolutions)
                             {
@@ -242,7 +243,7 @@ public class PoC
                 page.Header()
                     .AlignCenter()
                     .PaddingTop(100)
-                    .Text("Catágolo ConsuPC")
+                    .Text("Catálogo ConsuPC")
                     .Bold()
                     .FontSize(36)
                     .FontColor(Colors.Blue.Darken4);
