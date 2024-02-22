@@ -10,8 +10,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Blorc.Core" Version="1.4.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.1" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.*-* " />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.2" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.4.2-preview.24051.9" />
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*-* " />
 	</ItemGroup>
 

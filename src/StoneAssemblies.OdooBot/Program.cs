@@ -22,6 +22,9 @@ using QuestPDF.Infrastructure;
 using Blorc.Services;
 using System.Net;
 
+using Microsoft.AspNetCore.OData;
+using Microsoft.OData.ModelBuilder;
+
 QuestPDF.Settings.License = LicenseType.Community;
 QuestPDF.Settings.EnableDebugging = true;
 QuestPDF.Settings.CheckIfAllTextGlyphsAreAvailable = false;
@@ -42,8 +45,19 @@ builder.Configuration
 
 builder.Services.AddMediatR(configuration => configuration.RegisterServicesFromAssemblyContaining<Program>());
 
+// TODO: Improve this later.
+var modelBuilder = new ODataConventionModelBuilder();
+modelBuilder.EntityType<global::StoneAssemblies.OdooBot.Entities.Category>();
+modelBuilder.EntityType<global::StoneAssemblies.OdooBot.Entities.Product>();
+modelBuilder.EntitySet<global::StoneAssemblies.OdooBot.Entities.Category>("Categories");
+modelBuilder.EntitySet<global::StoneAssemblies.OdooBot.Entities.Product>("Products");
+
 builder.Services
     .AddControllersWithViews()
+    .AddOData(options => options
+        .Select().Filter().OrderBy().Expand().Count().SetMaxTop(null).AddRouteComponents(
+            "odata",
+            modelBuilder.GetEdmModel()))
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor;

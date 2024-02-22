@@ -11,21 +11,18 @@ using StoneAssemblies.OdooBot.Services;
 
 public class CategoriesController : ODataController
 {
-    [EnableQuery]
+    [EnableQuery(PageSize = 10)]
     public async Task<ActionResult<IEnumerable<Category>>> Get(
         [FromServices] IRepository<Category, ApplicationDbContext> repository)
     {
-        var categories = await repository.FindAsync(
-                             SpecificationBuilder.Build<Category>(
-                                 categories => categories.Include(category => category.Products)));
-        return this.Ok(categories);
+        return this.Ok(repository.All().Include(category => category.Products));
     }
 
     [EnableQuery]
     public async Task<ActionResult<Category>> Get(
         [FromRoute] Guid key, [FromServices] IRepository<Category, ApplicationDbContext> repository)
     {
-        var category = await repository.SingleOrDefaultAsync(
+        var category = await repository.FindAsync(
                            SpecificationBuilder.Build<Category>(
                                categories =>
                                    categories.Where(category => category.Id == key)
@@ -38,16 +35,11 @@ public class CategoriesController : ODataController
         return this.Ok(category);
     }
 
-    //[HttpGet("odata/Categories({key})/Products")]
-    //[EnableQuery]
-    //public async Task<ActionResult<IEnumerable<Product>>> GetProductsOfCategory(
-    //    [FromRoute] Guid key, [FromServices] IRepository<Product, ApplicationDbContext> repository)
-    //{
-
-    //    var products = await repository.FindAsync(
-    //                      SpecificationBuilder.Build<Product>(
-    //                          categories =>
-    //                              categories.Where(product => product.CategoryId == key)));
-    //    return this.Ok(products);
-    //}
+    [HttpGet("odata/Categories({key})/Products")]
+    [HttpGet("odata/Categories/{key}/Products")]
+    [EnableQuery(PageSize = 10)]
+    public ActionResult<IEnumerable<Product>> GetProductsOfCategory([FromRoute] Guid key, [FromServices] IRepository<Product, ApplicationDbContext> repository)
+    {
+        return this.Ok(repository.All().Where(product => product.CategoryId == key));
+    }
 }
