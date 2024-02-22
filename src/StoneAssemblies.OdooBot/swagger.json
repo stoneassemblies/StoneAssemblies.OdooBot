@@ -5970,6 +5970,10 @@
             "type": "number",
             "format": "double"
           },
+          "standardPrice": {
+            "type": "number",
+            "format": "double"
+          },
           "quantityUnit": {
             "type": "string",
             "nullable": true

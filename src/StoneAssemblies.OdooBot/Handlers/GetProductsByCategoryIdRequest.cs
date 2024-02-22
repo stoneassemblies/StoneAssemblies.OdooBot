@@ -35,6 +35,7 @@ public class GetProductsByCategoryIdRequestHandler(IRepository<Product, Applicat
                 }),
                 InStockQuantity = product.InStockQuantity,
                 QuantityUnit = product.QuantityUnit,
+                StandardPrice = product.StandardPrice,
             })
         );
 

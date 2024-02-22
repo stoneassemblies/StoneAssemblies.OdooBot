@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
-using StoneAssemblies.OdooBot.Entities;
+﻿using StoneAssemblies.OdooBot.Entities;
 
 namespace StoneAssemblies.OdooBot.DataTransferObjects;
 
@@ -15,8 +14,9 @@ public class ProductDetails
 
     public double InStockQuantity { get; set; }
 
-    public string QuantityUnit { get; set; }
+    public double StandardPrice { get; set; }
 
+    public string QuantityUnit { get; set; }
 
     public IEnumerable<Image> FeatureImages { get; set; }
 }
