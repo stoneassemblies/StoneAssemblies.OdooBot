@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StoneAssemblies.OdooBot.Services;
 
@@ -10,9 +11,11 @@ using StoneAssemblies.OdooBot.Services;
 namespace StoneAssemblies.OdooBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240222191048_Adds_StandardPrice_To_Product")]
+    partial class Adds_StandardPrice_To_Product
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.2");
@@ -101,7 +104,7 @@ namespace StoneAssemblies.OdooBot.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("StandardPrice")
+                    b.Property<double?>("StandardPrice")
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");

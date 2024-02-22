@@ -118,6 +118,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             model.Id,
             model.DescriptionSale,
             model.QtyAvailable,
+            model.StandardPrice,
             model.UomName
         }).FirstOrDefaultAsync();
 
@@ -129,6 +130,13 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         }
 
         logger.LogInformation("Detecting changes in product '{ExternalId}' - '{ProductName}'", productTemplateOdooModel.Id, product.Name);
+
+        var standardPrice = productTemplateOdooModel.StandardPrice.GetValueOrDefault(0.0d);
+        if (Math.Abs(product.StandardPrice - standardPrice) > 0.0001)
+        {
+            changeDetected = true;
+            product.StandardPrice = standardPrice;
+        }
 
         var inStockQuantity = productTemplateOdooModel.QtyAvailable.GetValueOrDefault(0.0d);
         if (Math.Abs(product.InStockQuantity - inStockQuantity) > 0.0001 || product.QuantityUnit != productTemplateOdooModel.UomName)
@@ -523,6 +531,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     productTemplateOdooModel.DisplayName,
                     productTemplateOdooModel.DescriptionSale,
                     productTemplateOdooModel.QtyAvailable,
+                    productTemplateOdooModel.StandardPrice,
                     productTemplateOdooModel.UomName
                 });
 
@@ -533,6 +542,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                         CategoryId = category.Id,
                         ExternalId = productTemplateOdooModel.Id,
                         InStockQuantity = productTemplateOdooModel.QtyAvailable.GetValueOrDefault(0.0d),
+                        StandardPrice = productTemplateOdooModel.StandardPrice.GetValueOrDefault(0.0d),
                         QuantityUnit = productTemplateOdooModel.UomName,
                     };
 

@@ -22,4 +22,6 @@ public class Product
     public double InStockQuantity { get; set; }
     
     public string QuantityUnit { get; set; }
+
+    public double StandardPrice { get; set; }
 }
