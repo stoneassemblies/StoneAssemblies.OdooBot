@@ -24,4 +24,6 @@ public class Product
     public string QuantityUnit { get; set; }
 
     public double StandardPrice { get; set; }
+
+    public double Price { get; set; }
 }

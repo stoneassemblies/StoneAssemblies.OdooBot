@@ -10,7 +10,7 @@ using System.Reflection;
 using MethodTimer;
 using StoneAssemblies.OdooBot;
 using StoneAssemblies.OdooBot.Models;
-using QuestPDF.Infrastructure;
+
 using Image = StoneAssemblies.OdooBot.Entities.Image;
 
 public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProvider provider,
@@ -18,6 +18,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         IOdooRepository<ProductTemplateOdooModel> productTemplateRepository,
         IOdooRepository<ProductImageOdooModel> productImageRepository,
         IOdooRepository<IrTranslationOdooModel> irTranslationRepository,
+        IOdooRepository<ProductPricelistItemOdooModel> productPricelistItemRepository,
         IUnitOfWork<ApplicationDbContext> unitOfWork)
     : IInvocable
 {
@@ -146,6 +147,30 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             product.QuantityUnit = productTemplateOdooModel.UomName;
         }
 
+        var productPricelistItemResult = await productPricelistItemRepository.Query()
+                                             .Where(model => model.Active, OdooOperator.EqualsTo, true).Where(
+                                                 model => model.ProductId,
+                                                 OdooOperator.EqualsTo,
+                                                 productTemplateOdooModel.Id).FirstOrDefaultAsync();
+
+        // TODO: Improve this later
+        double price;
+        if (productPricelistItemResult?.Value is not null)
+        {
+            var productPricelistItemOdooModel = productPricelistItemResult.Value;
+            price = productPricelistItemOdooModel.FixedPrice.GetValueOrDefault(0.0d);
+        }
+        else
+        {
+            price = product.StandardPrice;
+        }
+
+        if (Math.Abs(product.Price - price) > 0.0001)
+        {
+            changeDetected = true;
+            product.Price = price;
+        }
+
         var nameTranslationResult = await irTranslationRepository
             .Query()
             .Where(model => model.ResId, OdooOperator.EqualsTo, product.ExternalId)
@@ -267,7 +292,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         var imageRepository = unitOfWork.GetRepository<Image>();
         logger.LogInformation("Detecting changes in feature images of product '{ExternalId}' - '{ProductName}'", externalId, product.Name);
         var count = 0;
-        foreach (var imageSize in Enum.GetValues<StoneAssemblies.OdooBot.Entities.ImageSize>())
+        foreach (var imageSize in Enum.GetValues<ImageSize>())
         {
             var changeDetected = false;
             var encodeContent = typeof(ProductTemplateOdooModel).GetProperty(
@@ -546,13 +571,30 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                         QuantityUnit = productTemplateOdooModel.UomName,
                     };
 
+                    var productPricelistItemResult = await productPricelistItemRepository.Query()
+                                                   .Where(model => model.Active, OdooOperator.EqualsTo, true).Where(
+                                                       model => model.ProductId,
+                                                       OdooOperator.EqualsTo,
+                                                       productTemplateOdooModel.Id).FirstOrDefaultAsync();
+
+                    // TODO: Improve this later
+                    if (productPricelistItemResult?.Value is not null)
+                    {
+                        var productPricelistItemOdooModel = productPricelistItemResult.Value;
+                        product.Price = productPricelistItemOdooModel.FixedPrice.GetValueOrDefault(0.0d);
+                    }
+                    else
+                    {
+                        product.Price = product.StandardPrice;
+                    }
+
                     var nameTranslationResult = await irTranslationRepository
-                        .Query()
-                        .Where(model => model.ResId, OdooOperator.EqualsTo, product.ExternalId)
-                        .Where(model => model.Lang, OdooOperator.EqualsTo,
-                            LanguageIrTranslationOdooEnum.SpanishEspaOl)
-                        .Where(model => model.Name, OdooOperator.EqualsTo, "product.template,name")
-                        .FirstOrDefaultAsync();
+                                                    .Query()
+                                                    .Where(model => model.ResId, OdooOperator.EqualsTo, product.ExternalId)
+                                                    .Where(model => model.Lang, OdooOperator.EqualsTo,
+                                                        LanguageIrTranslationOdooEnum.SpanishEspaOl)
+                                                    .Where(model => model.Name, OdooOperator.EqualsTo, "product.template,name")
+                                                    .FirstOrDefaultAsync();
 
                     product.Name = (nameTranslationResult?.Value?.Value ?? productTemplateOdooModel.DisplayName)?.Trim() ?? string.Empty;
 

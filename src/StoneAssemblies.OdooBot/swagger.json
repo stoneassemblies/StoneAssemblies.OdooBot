@@ -5943,6 +5943,10 @@
           "standardPrice": {
             "type": "number",
             "format": "double"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -6052,6 +6056,10 @@
             "nullable": true
           },
           "standardPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "price": {
             "type": "number",
             "format": "double"
           }

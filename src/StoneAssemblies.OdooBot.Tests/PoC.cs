@@ -38,7 +38,7 @@ public class PoC
         var loginResult = await odooClient.LoginAsync();
         if (loginResult.Succeed)
         {
-            var tableName = "ir.translation";
+            var tableName = "product.pricelist.item";
             var modelResult = await odooClient.GetModelAsync(tableName);
             var model = OdooModelMapper.GetDotNetModel(tableName, modelResult.Value);
         }
@@ -59,6 +59,21 @@ public class PoC
 
         var encodedImage = surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).ToArray();
         return Image.FromBinaryData(encodedImage);
+    }
+
+    [Fact]
+    public async Task DoSomething2()
+    {
+        var config = new OdooConfig(ApiUrl, Database, Username, Password);
+        var listOdooRepository = new OdooRepository<ProductPricelistItemOdooModel>(config);
+        var listAsync = await listOdooRepository.Query().ToListAsync();
+
+        if (listAsync?.Value is null)
+        {
+            return;
+        }
+
+        var productPricelistOdooModels = listAsync.Value;
     }
 
     [Fact]
@@ -119,7 +134,7 @@ public class PoC
             }
         }
 
-        foreach (var odooProductCategory in odooProductCategories)
+        foreach (var odooProductCategory in odooProductCategories.Where(model => model.Name.Contains("Impresoras - Toners - Accesorios")))
         {
             var category = categories.FirstOrDefault(category => category.Id == odooProductCategory.Id);
             if (category is null)
@@ -158,6 +173,7 @@ public class PoC
                         foreach (var productTemplateOdooModel in productTemplatesResult.Value)
                         {
                             var uomName = productTemplateOdooModel.UomName;
+
                             var product = new Product
                                               {
                                                   Id = productTemplateOdooModel.Id,
