@@ -29,13 +29,11 @@ public class ProductsController : ODataController
     }
 
     [HttpGet("odata/Products({key})/Category")]
+    [HttpGet("odata/Products/{key}/Category")]
     [EnableQuery]
     public async Task<ActionResult<Category>> GetProductCategory([FromRoute] Guid key, [FromServices] IRepository<Product, ApplicationDbContext> repository)
     {
-        var category = await repository.SingleOrDefaultAsync(
-            SpecificationBuilder.Build<Product, Category>(
-                products => products.Where(product => product.Id == key).Select(product => product.Category)));
+        var category = await repository.SingleOrDefaultAsync(SpecificationBuilder.Build<Product, Category>(products => products.Where(product => product.Id == key).Select(product => product.Category)));
         return this.Ok(category);
     }
-
 }
