@@ -119,6 +119,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             model.Id,
             model.DescriptionSale,
             model.QtyAvailable,
+            model.VirtualAvailable,
             model.StandardPrice,
             model.UomName
         }).FirstOrDefaultAsync();
@@ -147,11 +148,19 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             product.QuantityUnit = productTemplateOdooModel.UomName;
         }
 
+
+        var incomingQuantity = Math.Max(productTemplateOdooModel.VirtualAvailable.GetValueOrDefault(0.0d) - product.InStockQuantity, 0.0d);
+        if (Math.Abs(product.IncomingQuantity - incomingQuantity) > 0.0001)
+        {
+            changeDetected = true;
+            product.IncomingQuantity = incomingQuantity;
+        }
+
         var productPricelistItemResult = await productPricelistItemRepository.Query()
-                                             .Where(model => model.Active, OdooOperator.EqualsTo, true).Where(
-                                                 model => model.ProductId,
-                                                 OdooOperator.EqualsTo,
-                                                 productTemplateOdooModel.Id).FirstOrDefaultAsync();
+                                         .Where(model => model.Active, OdooOperator.EqualsTo, true).Where(
+                                             model => model.ProductId,
+                                             OdooOperator.EqualsTo,
+                                             productTemplateOdooModel.Id).FirstOrDefaultAsync();
 
         // TODO: Improve this later
         double price;
@@ -556,6 +565,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     productTemplateOdooModel.DisplayName,
                     productTemplateOdooModel.DescriptionSale,
                     productTemplateOdooModel.QtyAvailable,
+                    productTemplateOdooModel.VirtualAvailable,
                     productTemplateOdooModel.StandardPrice,
                     productTemplateOdooModel.UomName
                 });
@@ -570,6 +580,8 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                         StandardPrice = productTemplateOdooModel.StandardPrice.GetValueOrDefault(0.0d),
                         QuantityUnit = productTemplateOdooModel.UomName,
                     };
+
+                    product.IncomingQuantity = Math.Max(productTemplateOdooModel.VirtualAvailable.GetValueOrDefault(0.0d) - product.InStockQuantity, 0.0d);
 
                     var productPricelistItemResult = await productPricelistItemRepository.Query()
                                                    .Where(model => model.Active, OdooOperator.EqualsTo, true).Where(

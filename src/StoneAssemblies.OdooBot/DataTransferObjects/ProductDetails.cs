@@ -14,6 +14,8 @@ public class ProductDetails
 
     public double InStockQuantity { get; set; }
 
+    public double IncomingQuantity { get; set; }
+
     public double StandardPrice { get; set; }
 
     public string QuantityUnit { get; set; }

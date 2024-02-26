@@ -34,6 +34,7 @@ public class GetProductsByCategoryIdRequestHandler(IRepository<Product, Applicat
                     Size = image.Size,
                 }),
                 InStockQuantity = product.InStockQuantity,
+                IncomingQuantity = product.IncomingQuantity,
                 QuantityUnit = product.QuantityUnit,
                 StandardPrice = product.StandardPrice,
             })
