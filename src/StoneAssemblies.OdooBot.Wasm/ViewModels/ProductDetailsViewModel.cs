@@ -16,6 +16,8 @@ namespace StoneAssemblies.OdooBot.Wasm.ViewModels
 
         public double IncomingQuantity => product.IncomingQuantity;
 
+        public double AggregateQuantity => product.AggregateQuantity;
+
         public double StandardPrice => product.StandardPrice;
 
         public string ReferenceImage

@@ -15,6 +15,7 @@ namespace StoneAssemblies.OdooBot.DataTransferObjects
         public List<ImageDto> Images { get; set; }
         public double InStockQuantity { get; set; }
         public double IncomingQuantity { get; set; }
+        public double AggregateQuantity { get; set; }
         public string QuantityUnit { get; set; }
         public double StandardPrice { get; set; }
         public double Price { get; set; }

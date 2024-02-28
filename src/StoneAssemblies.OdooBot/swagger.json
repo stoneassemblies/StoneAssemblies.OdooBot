@@ -5940,6 +5940,10 @@
             "type": "number",
             "format": "double"
           },
+          "aggregateQuantity": {
+            "type": "number",
+            "format": "double"
+          },
           "quantityUnit": {
             "type": "string",
             "nullable": true
@@ -5979,6 +5983,10 @@
             "format": "double"
           },
           "incomingQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "aggregateQuantity": {
             "type": "number",
             "format": "double"
           },
@@ -6060,6 +6068,10 @@
             "format": "double"
           },
           "incomingQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "aggregateQuantity": {
             "type": "number",
             "format": "double"
           },

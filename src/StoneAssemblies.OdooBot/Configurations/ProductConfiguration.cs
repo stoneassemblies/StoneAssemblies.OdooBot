@@ -13,6 +13,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .WithMany(category => category.Products)
             .HasForeignKey(product => product.CategoryId);
 
+        builder.Property(p => p.AggregateQuantity)
+            .HasComputedColumnSql("[InStockQuantity] + [IncomingQuantity]");
+
         builder
             .HasIndex(product => product.ExternalId).IsUnique();
     }

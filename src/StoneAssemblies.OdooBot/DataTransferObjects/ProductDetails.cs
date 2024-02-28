@@ -16,6 +16,8 @@ public class ProductDetails
 
     public double IncomingQuantity { get; set; }
 
+    public double AggregateQuantity { get; set; }
+
     public double StandardPrice { get; set; }
 
     public string QuantityUnit { get; set; }
