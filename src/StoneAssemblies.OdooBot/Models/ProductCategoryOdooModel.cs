@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿namespace StoneAssemblies.OdooBot.Models;
+
+using Newtonsoft.Json;
+
 using PortaCapena.OdooJsonRpcClient.Attributes;
 using PortaCapena.OdooJsonRpcClient.Converters;
 using PortaCapena.OdooJsonRpcClient.Models;
 
-namespace StoneAssemblies.OdooBot.Tests;
+using StoneAssemblies.OdooBot.Tests;
 
 [OdooTableName("product.category")]
 [JsonConverter(typeof(OdooModelConverter))]

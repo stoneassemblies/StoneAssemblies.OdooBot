@@ -38,6 +38,7 @@ public class GetProductsByCategoryIdRequestHandler(IRepository<Product, Applicat
                 AggregateQuantity = product.AggregateQuantity,
                 QuantityUnit = product.QuantityUnit,
                 StandardPrice = product.StandardPrice,
+                IsPublished = product.IsPublished,
             })
         );
 

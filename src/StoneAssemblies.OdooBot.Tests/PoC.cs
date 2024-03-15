@@ -38,7 +38,7 @@ public class PoC
         var loginResult = await odooClient.LoginAsync();
         if (loginResult.Succeed)
         {
-            var tableName = "product.pricelist.item";
+            var tableName = "product.public.category";
             var modelResult = await odooClient.GetModelAsync(tableName);
             var model = OdooModelMapper.GetDotNetModel(tableName, modelResult.Value);
         }
@@ -134,7 +134,7 @@ public class PoC
             }
         }
 
-        foreach (var odooProductCategory in odooProductCategories.Where(model => model.Name.Contains("Impresoras - Toners - Accesorios")))
+        foreach (var odooProductCategory in odooProductCategories.Where(model => model.Name.Contains("Baterias UPS")))
         {
             var category = categories.FirstOrDefault(category => category.Id == odooProductCategory.Id);
             if (category is null)
@@ -152,13 +152,14 @@ public class PoC
             var productIds = category.Products.Select(product => product.Id).ToArray();
             var countResult = await productTemplateRepository.Query()
                 .Where(p => p.CategId, OdooOperator.EqualsTo, category.Id)
-                .Where(p => p.Id, OdooOperator.NotIn, productIds).CountAsync();
+                .Where(p => p.Id, OdooOperator.NotIn, productIds)
+                .CountAsync();
 
             if (countResult?.Value > 0)
             {
                 var count = countResult.Value;
                 var offset = 0;
-                const int limit = 5;
+                const int limit = 100;
 
                 category.Products.Clear();
                 do

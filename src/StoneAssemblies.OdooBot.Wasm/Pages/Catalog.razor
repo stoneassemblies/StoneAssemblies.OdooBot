@@ -14,8 +14,11 @@
     <PageTitle>@Category.Name</PageTitle>
     <FluentLabel Typo="Typography.Header" style="text-align: center"> @Category.Name </FluentLabel>
 
-    <FluentDataGrid ItemsProvider="_productsProvider" Loading="_isLoading" ItemSize="46" Pagination="_paginationState" GridTemplateColumns="0.1fr 0.5fr 0.35fr 0.2fr 0.2fr 0.2fr 0.8fr 0.5fr" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="ProductDetailsViewModel">
+    <FluentDataGrid ItemsProvider="_productsProvider" Loading="_isLoading" ItemSize="46" Pagination="_paginationState" GridTemplateColumns="0.2fr 0.1fr 0.5fr 0.35fr 0.2fr 0.2fr 0.2fr 0.8fr 0.5fr" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="ProductDetailsViewModel">
         <ChildContent>
+            <TemplateColumn Title="Is Published">
+                <FluentCheckbox Value="@context.IsPublished" ReadOnly="true"/>
+            </TemplateColumn>
             <PropertyColumn Title="Id" Property="@(c => c!.ExternalId)"/>
             <TemplateColumn Title="Name">
                 <div style="white-space: pre-line">@context.Name</div>

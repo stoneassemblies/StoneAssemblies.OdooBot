@@ -19,6 +19,8 @@ namespace StoneAssemblies.OdooBot.Wasm.ViewModels
         public double AggregateQuantity => product.AggregateQuantity;
 
         public double StandardPrice => product.StandardPrice;
+        
+        public bool IsPublished => product.IsPublished;
 
         public string ReferenceImage
         {

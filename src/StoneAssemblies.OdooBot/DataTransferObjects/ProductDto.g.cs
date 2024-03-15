@@ -19,5 +19,6 @@ namespace StoneAssemblies.OdooBot.DataTransferObjects
         public string QuantityUnit { get; set; }
         public double StandardPrice { get; set; }
         public double Price { get; set; }
+        public bool IsPublished { get; set; }
     }
 }

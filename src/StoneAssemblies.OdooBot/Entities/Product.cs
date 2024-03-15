@@ -29,6 +29,7 @@ public class Product
 
     public double StandardPrice { get; set; }
 
-
     public double Price { get; set; }
+
+    public bool IsPublished { get; set; }
 }

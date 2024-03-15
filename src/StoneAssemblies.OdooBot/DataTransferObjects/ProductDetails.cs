@@ -20,6 +20,8 @@ public class ProductDetails
 
     public double StandardPrice { get; set; }
 
+    public bool  IsPublished { get; set; }
+
     public string QuantityUnit { get; set; }
 
     public IEnumerable<Image> FeatureImages { get; set; }

@@ -5955,6 +5955,9 @@
           "price": {
             "type": "number",
             "format": "double"
+          },
+          "isPublished": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -5993,6 +5996,9 @@
           "standardPrice": {
             "type": "number",
             "format": "double"
+          },
+          "isPublished": {
+            "type": "boolean"
           },
           "quantityUnit": {
             "type": "string",
@@ -6086,6 +6092,9 @@
           "price": {
             "type": "number",
             "format": "double"
+          },
+          "isPublished": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

@@ -121,7 +121,8 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
             model.QtyAvailable,
             model.VirtualAvailable,
             model.StandardPrice,
-            model.UomName
+            model.UomName,
+            model.IsPublished
         }).FirstOrDefaultAsync();
 
         var productTemplateOdooModel = queryResult?.Value;
@@ -178,6 +179,13 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         {
             changeDetected = true;
             product.Price = price;
+        }
+
+        var isPublished = productTemplateOdooModel.IsPublished ?? false;
+        if (product.IsPublished != isPublished)
+        {
+            changeDetected = true;
+            product.IsPublished = isPublished;
         }
 
         var nameTranslationResult = await irTranslationRepository
@@ -567,7 +575,8 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                     productTemplateOdooModel.QtyAvailable,
                     productTemplateOdooModel.VirtualAvailable,
                     productTemplateOdooModel.StandardPrice,
-                    productTemplateOdooModel.UomName
+                    productTemplateOdooModel.UomName,
+                    productTemplateOdooModel.IsPublished
                 });
 
                 await foreach (var productTemplateOdooModel in productTemplateQuery.GetAsync())
@@ -579,6 +588,7 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
                         InStockQuantity = productTemplateOdooModel.QtyAvailable.GetValueOrDefault(0.0d),
                         StandardPrice = productTemplateOdooModel.StandardPrice.GetValueOrDefault(0.0d),
                         QuantityUnit = productTemplateOdooModel.UomName,
+                        IsPublished = productTemplateOdooModel.IsPublished ?? false,
                     };
 
                     product.IncomingQuantity = Math.Max(productTemplateOdooModel.VirtualAvailable.GetValueOrDefault(0.0d) - product.InStockQuantity, 0.0d);
@@ -645,6 +655,21 @@ public class OddooSyncInvocable(ILogger<OddooSyncInvocable> logger, IServiceProv
         await foreach (var productCategoryOdooModel in categoryQuery.GetAsync())
         {
             var category = await categoryRepository.SingleOrDefaultAsync(c => c.ExternalId == productCategoryOdooModel.Id);
+
+            //var nameTranslationResult = await irTranslationRepository
+            //                                .Query()
+            //                                // .Where(model => model.ResId, OdooOperator.EqualsTo, productCategoryOdooModel.Id)
+            //                                .Where(model => model.Src, OdooOperator.EqualsTo, productCategoryOdooModel.DisplayName)
+            //                                .Where(model => model.Lang, OdooOperator.EqualsTo,
+            //                                    LanguageIrTranslationOdooEnum.SpanishEspaOl)
+            //                                .Where(model => model.Name, OdooOperator.EqualsTo, "product.public.category,name")
+            //                                .FirstOrDefaultAsync();
+
+            //if (nameTranslationResult?.Value?.Value is not null)
+            //{
+            //    var irTranslationOdooModel = nameTranslationResult.Value.Value;
+            //}
+
             if (category is null)
             {
                 logger.LogInformation("Adding new category '{CategoryName}'...", productCategoryOdooModel.Name);
